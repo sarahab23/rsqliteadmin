@@ -90,7 +90,8 @@ mod_export_data_ui <- function(id) {
           align = "left",
           class = "multicol",
           checkboxGroupInput(inputId = ns("selected_columns"),
-                             label = "Select Columns to Export")
+                             label = "Select Columns to Export"),
+          actionLink("selectall","Select All")
         )
       )),
       fluidRow(column(
@@ -182,14 +183,29 @@ mod_export_data_server <- function(input, output, session, conn) {
       inputId = "file_name",
       value = info$file_name_list[[input$table_list]]
     )
-    if (!is.null(conn$active_db))
-      updateCheckboxGroupInput(
-        session = session,
-        inputId = "selected_columns",
-        choices = RSQLite::dbGetQuery(conn$active_db,
-                                      table_structure_query(input$table_list))$name,
-        selected = info$column_list[[input$table_list]]
-      )
+    if (!is.null(conn$active_db)){
+      if(input$selectall == 0) return(NULL) 
+      else if (input$selectall%%2 == 0)
+      {
+        updateCheckboxGroupInput(
+          session = session,
+          inputId = "selected_columns",
+          choices = RSQLite::dbGetQuery(conn$active_db,
+                                        table_structure_query(input$table_list))$name
+        )
+      }
+      else
+      {
+        updateCheckboxGroupInput(
+          session = session,
+          inputId = "selected_columns",
+          choices = RSQLite::dbGetQuery(conn$active_db,
+                                        table_structure_query(input$table_list))$name,
+          selected = info$column_list[[input$table_list]]
+        ) 
+      }
+    }
+    
     updateCheckboxInput(
       session = session,
       inputId = "include_column_names",
@@ -207,6 +223,8 @@ mod_export_data_server <- function(input, output, session, conn) {
     }
     
   }, ignoreNULL = FALSE)
+  
+  
   
   observeEvent(input$include_column_names, {
     info$include_column_names[[input$table_list]] <-
@@ -350,4 +368,3 @@ mod_export_data_server <- function(input, output, session, conn) {
 
 ## To be copied in the server
 # callModule(mod_export_data_server, "export_data_ui_1")
-
