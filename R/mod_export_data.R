@@ -184,9 +184,20 @@ mod_export_data_server <- function(input, output, session, conn) {
       value = info$file_name_list[[input$table_list]]
     )
     if (!is.null(conn$active_db)){
-      if(input$selectall == 0) return(NULL) 
-      else if (input$selectall%%2 == 0)
+      if (input$selectall > 0)
+        {
+        if(input$selectall%%2 == 0)
       {
+          updateCheckboxGroupInput(
+            session = session,
+            inputId = "selected_columns",
+            choices = RSQLite::dbGetQuery(conn$active_db,
+                                          table_structure_query(input$table_list))$name,
+            selected = info$column_list[[input$table_list]]
+          )
+      }
+      else
+       {
         updateCheckboxGroupInput(
           session = session,
           inputId = "selected_columns",
@@ -194,18 +205,8 @@ mod_export_data_server <- function(input, output, session, conn) {
                                         table_structure_query(input$table_list))$name
         )
       }
-      else
-      {
-        updateCheckboxGroupInput(
-          session = session,
-          inputId = "selected_columns",
-          choices = RSQLite::dbGetQuery(conn$active_db,
-                                        table_structure_query(input$table_list))$name,
-          selected = info$column_list[[input$table_list]]
-        ) 
-      }
     }
-    
+    }
     updateCheckboxInput(
       session = session,
       inputId = "include_column_names",
